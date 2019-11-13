@@ -1,9 +1,0 @@
-# Doxygen
-doc/
-
-# Codeblock
-*.cbp
-*.layout
-*.depend
-obj/
-bin/
