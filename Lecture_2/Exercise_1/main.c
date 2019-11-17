@@ -68,8 +68,9 @@ int main()
 	scanf("%50s", in_buff);
 
 	// target string memory allocating (unnecessary memory not allocated)
+	/// \todo memory allocation can be moved into digit_cpy()
 	uint8_t *digit_str_ptr = NULL;
-	digit_str_ptr = malloc(sizeof(uint8_t) * digit_num(in_buff) + 1);
+	digit_str_ptr = (uint8_t*)malloc(sizeof(uint8_t) * digit_num(in_buff) + 1);
 	if (digit_str_ptr == NULL) {
 		printf("Error: memory allocation error.");
 		return -1;
