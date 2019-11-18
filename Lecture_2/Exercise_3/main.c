@@ -1,3 +1,12 @@
+/** \file
+ *
+ * GL EmbeddedProCamp - Task#3
+ *
+ * Task: Create linked list library with functions (ListAdd(),
+ * ListIs(), ListRemove()). New elements in list should be
+ * dynamically allocated.
+ */
+
 #include <stdio.h>
 #include <stdlib.h>
 
