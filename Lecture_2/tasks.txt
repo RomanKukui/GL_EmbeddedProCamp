@@ -1,0 +1,4 @@
+Tasks for Lecture 2
+1. Create function to copy all digits from input string to output string
+2. Create function to find the biggest element in integer array
+3. Create linked list library with functions (ListAdd(), ListIs(), ListRemove()). New elements in list should be dynamically allocated.
