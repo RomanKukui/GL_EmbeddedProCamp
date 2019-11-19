@@ -2,24 +2,20 @@
 
 list* ListAdd(list **root_ptr, void *content_ptr)
 {
-        list *list_ptr = *root_ptr;
-
 	list *curr_item = (list*)malloc(sizeof(list));
 	curr_item->content = content_ptr;
 
+        list *list_ptr = *root_ptr;
 	if (list_ptr == NULL) {
-		curr_item->prev = NULL;
-		curr_item->next = NULL;
-
 		*root_ptr = curr_item;	// update root by first
 	} else {
 		list_ptr = ListGetLast(list_ptr);
 
-		curr_item->prev = list_ptr;
-		curr_item->next = list_ptr->next;
-
 		list_ptr->next = curr_item;
 	}
+	curr_item->prev = list_ptr;	// even if list_ptr == NULL
+	curr_item->next = NULL;
+
 	return curr_item;
 }
 
