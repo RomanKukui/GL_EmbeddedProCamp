@@ -18,10 +18,10 @@ int main()
 	FILO *filo_buff = NULL;
 
 	int32_t tmp = 0;
-	FILO_Status status = FILO_ERR_UNKNOWN;
+	FILO_Status status = FILO_UNKNOWN_ERR;
 
 	while (1) {
-		printf("\n[+] push, [-] pop, [r] read < ");
+		printf("[+] push, [-] pop, [r] read < ");
 
 		uint8_t ch = 0;
 		ch = getch();
@@ -33,14 +33,14 @@ int main()
 		scanf("%d", &tmp);
 
 		status = FILO_Push(&filo_buff, tmp);
-		if (status != FILO_SUCCESSFUL) {
+		if (status != FILO_OK) {
 			FILO_Error(status);
 		}
 		break;
 
 	case '-':
 		status = FILO_Pop(&filo_buff, &tmp);
-		if (status != FILO_SUCCESSFUL) {
+		if (status != FILO_OK) {
 			FILO_Error(status);
 		} else {
 			printf("pop: %d\n", tmp);
@@ -49,12 +49,18 @@ int main()
 
 	case 'r':
 		status = FILO_Read(&filo_buff, &tmp);
-		if (status != FILO_SUCCESSFUL) {
+		if (status != FILO_OK) {
 			FILO_Error(status);
 		} else {
-			printf("read: %d", tmp);
+			printf("read: %d\n", tmp);
 		}
+		break;
+
+	case 13:
+		printf("\n");	// received enter, without data
+		break;
 		}
+
 	}
 	return 0;
 }
