@@ -1,5 +1,5 @@
 /** \file
- * \brief Array-based FILO buffer library
+ * \brief 	Array-based FIFO buffer library
  *
  * \author	Roman Kukui roman.kukui@gmail.com
  */
@@ -40,7 +40,7 @@ typedef enum FIFO_RESULT FIFO_status;
 uint8_t FIFO_Init(FIFO **buff, int32_t *data_arr, uint32_t arr_size);
 /**< \brief	Initialize FIFO control structure.
  *
- * \param[in,out] buff 	\b Empty pointer to FIFO control structure
+ * \param[in,out] buff 	Address of an empty pointer to FIFO control structure
  * \param[in] data_arr 	Pointer to array for storing items
  * \param[in] arr_size	Size of \p data_arr
  *
@@ -49,38 +49,36 @@ uint8_t FIFO_Init(FIFO **buff, int32_t *data_arr, uint32_t arr_size);
  */
 
 uint8_t FIFO_Put(FIFO *buff, int32_t data);
-/**< \brief
+/**< \brief	Add \p data to FIFO tail.
  *
- * \param buff FIFO*
- * \param data uint32_t
- * \return uint8_t
+ * \param[in,out] buff 	Pointer to FIFO control structure
+ * \param[in] data 	Value, that will be added to queue tail
  *
+ * \return 	Calling result according to FIFO_status
  */
 
 uint8_t FIFO_Get(FIFO *buff, int32_t *data);
-/**< \brief
+/**< \brief	Read item from FIFO head, remove item from FIFO.
  *
- * \param buff FIFO*
- * \param data uint32_t*
- * \return uint8_t
+ * \param[in,out] buff	Pointer to FIFO control structure
+ * \param[out] data	Pointer for storing gotten data
  *
+ * \return 	Calling result according to FIFO_status
  */
 
 uint8_t FIFO_Read(FIFO *buff, int32_t *data);
-/**< \brief
+/**< \brief	Read item from FIFO head, do NOT remove item from FIFO.
  *
- * \param buff FIFO*
- * \param data uint32_t*
- * \return uint8_t
+ * \param[in] buff 	Pointer to FIFO control structure
+ * \param[out] data	Pointer for storing gotten data
  *
+ * \return 	Calling result according to FIFO_status
  */
 
 void FIFO_Error(FIFO_status status);
-/**< \brief
+/**< \brief	Process and print FIFO lib status messages.
  *
- * \param status FIFO_Status
- * \return void
- *
+ * \param[in] status 	Status, that will be processed
  */
 
 #endif // FIFO_H_INCLUDED
