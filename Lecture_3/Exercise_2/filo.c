@@ -2,7 +2,7 @@
 
 uint8_t FILO_Push(FILO **filo_ptr, int32_t data)
 {
-	uint8_t status = FILO_ERR_UNKNOWN;
+	uint8_t status = FILO_UNKNOWN_ERR;
 
 	int32_t *data_ptr = malloc(sizeof(data));
 	if (data_ptr != NULL) {
@@ -10,7 +10,7 @@ uint8_t FILO_Push(FILO **filo_ptr, int32_t data)
 		if (node == NULL) {
 			// ERROR: can't create linked list item
 			free(data_ptr);
-			status = FILO_ERR_LIST_CREATE;
+			status = FILO_LIST_CREATE_ERR;
 		} else {
 			// update Top, without list.h modification
 			// filo_ptr every time point to FILO Top
@@ -19,18 +19,18 @@ uint8_t FILO_Push(FILO **filo_ptr, int32_t data)
 
 			*data_ptr = data;
 			node->content = data_ptr;
-			status = FILO_SUCCESSFUL;
+			status = FILO_OK;
 		}
 	} else {
 		// ERROR: can't allocate memory for data
-		status =  FILO_ERR_DATA_MEM_ALLOC;
+		status =  FILO_DATA_MEM_ALLOC_ERR;
 	}
 	return status;
 }
 
 uint8_t FILO_Pop(FILO **filo_ptr, int32_t *data)
 {
-	uint8_t status = FILO_ERR_UNKNOWN;
+	uint8_t status = FILO_UNKNOWN_ERR;
 
 	FILO *node = *filo_ptr;
 	if (node != NULL) {
@@ -43,23 +43,23 @@ uint8_t FILO_Pop(FILO **filo_ptr, int32_t *data)
 			*data = *node_data;
 			free(node_data);
 
-			status = FILO_SUCCESSFUL;
+			status = FILO_OK;
 		} else {
 			// ERROR: data pointer empty
-                        status = FILO_ERR_NODE_EMPTY;
+                        status = FILO_NODE_EMPTY;
 		}
 		/// \todo Create in list.h interface for RootPointer write
 		*filo_ptr = prev_node;
 	} else {
 		// ERROR: FILO buffer empty
-		status = FILO_ERR_FILO_EMPTY;
+		status = FILO_FILO_EMPTY;
 	}
 	return status;
 }
 
 uint8_t FILO_Read(FILO **filo_ptr, int32_t *data)
 {
-	uint8_t status = FILO_ERR_UNKNOWN;
+	uint8_t status = FILO_UNKNOWN_ERR;
 
 	FILO *node = *filo_ptr;
 	if (node != NULL) {
@@ -67,17 +67,17 @@ uint8_t FILO_Read(FILO **filo_ptr, int32_t *data)
 			/// \todo Add proper interface to list.h
 			*data = *((int32_t*)node->content);
 
-			status = FILO_SUCCESSFUL;
+			status = FILO_OK;
 		} else {
 			// ERROR: data pointer empty
 			int32_t _dummy;
 			FILO_Pop(filo_ptr, &_dummy);	// remove empty node
 
-			status = FILO_ERR_NODE_EMPTY;
+			status = FILO_NODE_EMPTY;
 		}
 	} else {
 		// ERROR: FILO buffer empty
-		status = FILO_ERR_FILO_EMPTY;
+		status = FILO_FILO_EMPTY;
 	}
 	return status;
 }
@@ -86,11 +86,11 @@ void FILO_Error(FILO_Status result)
 {
 	uint8_t *msg[FILO_RESULT_SIZE];
 
-	msg[FILO_ERR_DATA_MEM_ALLOC] = "Can't allocate memory for Node Data";
-	msg[FILO_ERR_LIST_CREATE] = "Can't create linked list Node";
-	msg[FILO_ERR_FILO_EMPTY] = "There are no any items in FILO";
-	msg[FILO_ERR_NODE_EMPTY] = "Empty data pointer in Item";
-	msg[FILO_ERR_UNKNOWN] = "Unknown status";
+	msg[FILO_DATA_MEM_ALLOC_ERR] = "can't allocate mem. for Data";
+	msg[FILO_LIST_CREATE_ERR] = "can't create list Node";
+	msg[FILO_FILO_EMPTY] = "FILO empty";
+	msg[FILO_NODE_EMPTY] = "item data empty";
+	msg[FILO_UNKNOWN_ERR] = "unknown status";
 
-	printf("\n\nERROR: %s\n", msg[result]);
+	printf("ERROR: %s\n", msg[result]);
 }
