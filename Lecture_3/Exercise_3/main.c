@@ -58,8 +58,12 @@ int main()
 		} else {
 			printf("read: %d\n", tmp);
 		}
+		break;
+
+	case 13:
+		printf("\n");	// received enter, without data
+		break;
 		}
 	}
-
 	return 0;
 }
