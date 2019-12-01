@@ -1,0 +1,11 @@
+Ex1: 
+Develop application that communicates with PC trough UART 
+•Application should send just echo. 
+•You should use only CMSIS library.
+•UART driver should contains following functions:
+	- init;
+	- open;
+	- read;
+	- write;
+	- close;
+	- deinit;
