@@ -1,3 +1,8 @@
+# User defined files & dirs
+/DebugConfig/*
+*.TMP
+*.scvd
+
 # A .gitignore for Keil projects.
 # Taken mostly from http://www.keil.com/support/man/docs/uv4/uv4_b_filetypes.htm
 
@@ -44,8 +49,6 @@
 # Generated output files
 /Listings/*
 /Objects/*
-
-/DebugConfig/*
 
 # Debugger files
 # define exception below if needed
