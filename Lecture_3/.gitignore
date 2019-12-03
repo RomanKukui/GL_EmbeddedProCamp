@@ -1,0 +1,10 @@
+# Doxygen
+/*/doc/
+/*/doxygen/
+
+# Codeblock
+/*/*.cbp
+/*/*.layout
+/*/*.depend
+/*/obj/
+/*/bin/
