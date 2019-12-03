@@ -385,16 +385,16 @@
               <FileType>1</FileType>
               <FilePath>.\Application\main.c</FilePath>
             </File>
-            <File>
-              <FileName>stm32f30x_it.c</FileName>
-              <FileType>1</FileType>
-              <FilePath>.\Application\stm32f30x_it.c</FilePath>
-            </File>
           </Files>
         </Group>
         <Group>
           <GroupName>Drivers</GroupName>
           <Files>
+            <File>
+              <FileName>stm32f30x_it.c</FileName>
+              <FileType>1</FileType>
+              <FilePath>.\Application\stm32f30x_it.c</FilePath>
+            </File>
             <File>
               <FileName>stm32f30x_gpio.c</FileName>
               <FileType>1</FileType>

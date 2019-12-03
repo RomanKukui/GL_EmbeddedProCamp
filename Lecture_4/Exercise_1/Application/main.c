@@ -105,7 +105,7 @@ void delay_ms(uint32_t delay)
   * 
   * @retval If main routine return you something, then you get in trouble :)
   */
-int main(void)
+void main(void)
 {
   clk_init();
   timer_init();
@@ -118,8 +118,6 @@ int main(void)
     GPIO_ResetBits(LED_PORT, LED_PINS);
     delay_ms(1000);
   }
-
-  return 0;
 }
 
 /**
