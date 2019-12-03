@@ -1,0 +1,6 @@
+- Set up development environment for STM32 Development
+- Download „blink“ Application from github: https://github.com/rikorsev/GL_EmbeddedProCamp- 
+- Compile it and upload to STM32F303 Discovery Board
+- Check if boards LED is blinking. 
+- Run debugger
+- Find disassembler window and try to analyze each line of main function.
