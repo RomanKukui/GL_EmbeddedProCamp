@@ -1,0 +1,9 @@
+1) Reimplement UART driver with Interrupts
+
+2) Reimplement UART driver with DMA
+
+3) Develop application for ADC measurement using DMA
+
+4) Increase the number of ADC channels to 3 with DMA
+
+*ST HAL library are allowed for all tasks
