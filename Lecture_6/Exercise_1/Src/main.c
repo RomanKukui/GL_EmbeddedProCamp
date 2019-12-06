@@ -25,9 +25,7 @@
 
 /* Private includes ----------------------------------------------------------*/
 /* USER CODE BEGIN Includes */
-
-#include <string.h>
-
+	#include <string.h>
 /* USER CODE END Includes */
 
 /* Private typedef -----------------------------------------------------------*/
@@ -93,18 +91,32 @@ int main(void)
   MX_USART1_UART_Init();
   /* USER CODE BEGIN 2 */
   
-  uint8_t msg[] = {"Initialisation completed\n\r"};
-  HAL_UART_Transmit_IT(&huart1, msg, strlen((const char *)msg));
+	uint8_t msg[] = {"Initialisation completed\n\r"};
+	HAL_UART_Transmit_IT(&huart1, msg, strlen((const char *)msg));
 
   /* USER CODE END 2 */
 
   /* Infinite loop */
   /* USER CODE BEGIN WHILE */
+	
+	// buffer
+	uint8_t ch = 0;
+	
   while (1)
   {
     /* USER CODE END WHILE */
 
     /* USER CODE BEGIN 3 */
+	  if (HAL_UART_Receive_IT(&huart1, &ch, 1) == HAL_OK) {
+		  // received data
+		  switch (ch) {
+			  case '\r':
+				  HAL_UART_Transmit_IT(&huart1, "\n\r", 2);
+				  break;
+			  default:
+				  HAL_UART_Transmit_IT(&huart1, &ch, 1);
+		  }
+	  }
   }
   /* USER CODE END 3 */
 }

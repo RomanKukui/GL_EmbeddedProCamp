@@ -47,6 +47,7 @@
 /* USER CODE END EM */
 
 /* Exported functions prototypes ---------------------------------------------*/
+void SysTick_Handler(void);
 void USART1_IRQHandler(void);
 /* USER CODE BEGIN EFP */
 
