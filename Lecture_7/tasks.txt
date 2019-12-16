@@ -1,0 +1,3 @@
+1) Create project using OS Protothreads to schedule the two or more threads.
+
+2) Create project on base OS Protothreads using  a functions PT_WAIT_UNTIL, PT_SCHEDULE
