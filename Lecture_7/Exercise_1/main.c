@@ -1,13 +1,9 @@
 /** \file
  * \author Roman Kukui
  *
- * Tasks:
- *
- * 1) Create project using OS Protothreads to schedule the two
+ * Task:
+ * Create project using OS Protothreads to schedule the two
  * or more threads.
- *
- * 2) Create project on base OS Protothreads using  a functions
- * PT_WAIT_UNTIL, PT_SCHEDULE
  */
 
 
@@ -19,7 +15,6 @@
 #include <time.h>
 #include "pt/pt.h"
 
-//*
 /** \brief 	Polling/dummy delay function.
  *
  * \param[in] delay	Delay period in \b milliseconds.
@@ -32,14 +27,20 @@ void delay(uint32_t delay)
 	while(clock() < delay) {
 	}
 }
-//*/
 
 /// Threads control structures
 static struct pt thr_1, thr_2, thr_input;
 
-/// Threads flags/semaphores
-static uint8_t f_1, f_2, f_quit;
+/// Threads flags(dummy "semaphores") (0 - frozen, 1 - executed).
+static uint8_t f_1, f_2;
 
+/// Program exit flag (0 - executing, 1 - exit program).
+static uint8_t f_quit;
+
+/** \brief 	Protothreads wrapped Thread 1 code.
+ *
+ * \param[in,out] *pt	Address of thread control structure.
+ */
 static PT_THREAD(thread_1(struct pt *pt))
 {
 	PT_BEGIN(pt);
@@ -61,6 +62,10 @@ static PT_THREAD(thread_1(struct pt *pt))
 	PT_END(pt);
 }
 
+/** \brief 	Protothreads wrapped Thread 2 code.
+ *
+ * \param[in,out] *pt	Address of thread control structure.
+ */
 static PT_THREAD(thread_2(struct pt *pt))
 {
 	PT_BEGIN(pt);
@@ -81,6 +86,10 @@ static PT_THREAD(thread_2(struct pt *pt))
 	PT_END(pt);
 }
 
+/** \brief 	Protothreads wrapped user input thread code.
+ *
+ * \param[in,out] *pt	Address of thread control structure.
+ */
 static PT_THREAD(thread_input(struct pt *pt))
 {
 	// Buffer for user input char
@@ -106,7 +115,7 @@ static PT_THREAD(thread_input(struct pt *pt))
 	PT_END(pt);
 }
 
-
+/// Main loop
 int main()
 {
 	f_quit = 0;
