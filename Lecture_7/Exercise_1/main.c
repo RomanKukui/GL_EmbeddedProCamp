@@ -93,7 +93,8 @@ static PT_THREAD(thread_2(struct pt *pt))
 static PT_THREAD(thread_input(struct pt *pt))
 {
 	// Buffer for user input char
-	uint8_t input_ch = 0;
+	// used static for preventing store in stack
+	static uint8_t input_ch = 0;
 
 	PT_BEGIN(pt);
 
