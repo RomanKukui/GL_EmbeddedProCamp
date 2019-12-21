@@ -10,6 +10,7 @@
       <TargetName>Exercise_1</TargetName>
       <ToolsetNumber>0x4</ToolsetNumber>
       <ToolsetName>ARM-ADS</ToolsetName>
+      <pCCUsed>5060528::V5.06 update 5 (build 528)::ARMCC</pCCUsed>
       <uAC6>0</uAC6>
       <TargetOption>
         <TargetCommonOption>
@@ -335,7 +336,7 @@
               <MiscControls></MiscControls>
               <Define>USE_HAL_DRIVER,STM32F303xC</Define>
               <Undefine></Undefine>
-              <IncludePath>../Inc; ../Drivers/STM32F3xx_HAL_Driver/Inc/Legacy; ../Drivers/STM32F3xx_HAL_Driver/Inc; ../Middlewares/Third_Party/FreeRTOS/Source/include; ../Middlewares/Third_Party/FreeRTOS/Source/CMSIS_RTOS_V2; ../Middlewares/Third_Party/FreeRTOS/Source/portable/RVDS/ARM_CM4F; ../Drivers/CMSIS/Device/ST/STM32F3xx/Include; ../Drivers/CMSIS/Include</IncludePath>
+              <IncludePath>../Inc;     ../Drivers/STM32F3xx_HAL_Driver/Inc/Legacy;     ../Drivers/STM32F3xx_HAL_Driver/Inc;     ../Middlewares/Third_Party/FreeRTOS/Source/include;     ../Middlewares/Third_Party/FreeRTOS/Source/CMSIS_RTOS_V2;     ../Middlewares/Third_Party/FreeRTOS/Source/portable/RVDS/ARM_CM4F;     ../Drivers/CMSIS/Device/ST/STM32F3xx/Include;     ../Drivers/CMSIS/Include</IncludePath>
             </VariousControls>
           </Cads>
           <Aads>
@@ -422,12 +423,12 @@
             <File>
               <FileName>stm32f3xx_hal.c</FileName>
               <FileType>1</FileType>
-              <FilePath>../Drivers/STM32F3xx_HAL_Driver/Src/stm32f3xx_hal.c</FilePath>
+              <FilePath>..\Drivers\STM32F3xx_HAL_Driver\Src\stm32f3xx_hal.c</FilePath>
             </File>
             <File>
               <FileName>stm32f3xx_hal_rcc.c</FileName>
               <FileType>1</FileType>
-              <FilePath>../Drivers/STM32F3xx_HAL_Driver/Src/stm32f3xx_hal_rcc.c</FilePath>
+              <FilePath>..\Drivers\STM32F3xx_HAL_Driver\Src\stm32f3xx_hal_rcc.c</FilePath>
             </File>
             <File>
               <FileName>stm32f3xx_hal_rcc_ex.c</FileName>
@@ -487,7 +488,7 @@
             <File>
               <FileName>stm32f3xx_hal_tim.c</FileName>
               <FileType>1</FileType>
-              <FilePath>../Drivers/STM32F3xx_HAL_Driver/Src/stm32f3xx_hal_tim.c</FilePath>
+              <FilePath>..\Drivers\STM32F3xx_HAL_Driver\Src\stm32f3xx_hal_tim.c</FilePath>
             </File>
             <File>
               <FileName>stm32f3xx_hal_tim_ex.c</FileName>
