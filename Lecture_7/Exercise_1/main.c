@@ -1,9 +1,12 @@
 /** \file
  * \author Roman Kukui
  *
- * Task:
- * Create project using OS Protothreads to schedule the two
+ * Tasks:
+ * 1) Create project using OS Protothreads to schedule the two
  * or more threads.
+ *
+ * 2) Create project on base OS Protothreads using  a functions
+ * PT_WAIT_UNTIL, PT_SCHEDULE
  */
 
 
@@ -130,10 +133,10 @@ int main()
 	PT_INIT(&thr_input);
 
 	while (1) {
-		thread_1(&thr_1);
-		thread_2(&thr_2);
+		PT_SCHEDULE(thread_1(&thr_1));
+		PT_SCHEDULE(thread_2(&thr_2));
 
-		thread_input(&thr_input);
+		PT_SCHEDULE(thread_input(&thr_input));
 
 		if (f_quit == 1) {
 			break;
