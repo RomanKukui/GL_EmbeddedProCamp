@@ -1,4 +1,3 @@
-/* USER CODE BEGIN Header */
 /**
   ******************************************************************************
   * @file    stm32f3xx_it.c
@@ -16,54 +15,16 @@
   *
   ******************************************************************************
   */
-/* USER CODE END Header */
 
 /* Includes ------------------------------------------------------------------*/
 #include "main.h"
 #include "stm32f3xx_it.h"
 #include "FreeRTOS.h"
 #include "task.h"
-/* Private includes ----------------------------------------------------------*/
-/* USER CODE BEGIN Includes */
-/* USER CODE END Includes */
-
-/* Private typedef -----------------------------------------------------------*/
-/* USER CODE BEGIN TD */
-
-/* USER CODE END TD */
-
-/* Private define ------------------------------------------------------------*/
-/* USER CODE BEGIN PD */
- 
-/* USER CODE END PD */
-
-/* Private macro -------------------------------------------------------------*/
-/* USER CODE BEGIN PM */
-
-/* USER CODE END PM */
-
-/* Private variables ---------------------------------------------------------*/
-/* USER CODE BEGIN PV */
-
-/* USER CODE END PV */
-
-/* Private function prototypes -----------------------------------------------*/
-/* USER CODE BEGIN PFP */
-
-/* USER CODE END PFP */
-
-/* Private user code ---------------------------------------------------------*/
-/* USER CODE BEGIN 0 */
-
-/* USER CODE END 0 */
 
 /* External variables --------------------------------------------------------*/
 extern UART_HandleTypeDef huart1;
 extern TIM_HandleTypeDef htim7;
-
-/* USER CODE BEGIN EV */
-
-/* USER CODE END EV */
 
 /******************************************************************************/
 /*           Cortex-M4 Processor Interruption and Exception Handlers          */ 
@@ -81,13 +42,7 @@ extern TIM_HandleTypeDef htim7;
   */
 void USART1_IRQHandler(void)
 {
-  /* USER CODE BEGIN USART1_IRQn 0 */
-
-  /* USER CODE END USART1_IRQn 0 */
   HAL_UART_IRQHandler(&huart1);
-  /* USER CODE BEGIN USART1_IRQn 1 */
-
-  /* USER CODE END USART1_IRQn 1 */
 }
 
 /**
@@ -95,16 +50,7 @@ void USART1_IRQHandler(void)
   */
 void TIM7_IRQHandler(void)
 {
-  /* USER CODE BEGIN TIM7_IRQn 0 */
-
-  /* USER CODE END TIM7_IRQn 0 */
   HAL_TIM_IRQHandler(&htim7);
-  /* USER CODE BEGIN TIM7_IRQn 1 */
-
-  /* USER CODE END TIM7_IRQn 1 */
 }
 
-/* USER CODE BEGIN 1 */
-
-/* USER CODE END 1 */
 /************************ (C) COPYRIGHT STMicroelectronics *****END OF FILE****/
