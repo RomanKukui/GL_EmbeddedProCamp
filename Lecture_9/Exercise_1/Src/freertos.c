@@ -52,7 +52,10 @@ void vApplicationGetIdleTaskMemory( StaticTask_t **ppxIdleTaskTCBBuffer, StackTy
 
 }
 
-/// LD10 blinking task.
+/** \brief	LD10 blinking task.
+ *
+ * \param[in,out]	*param Default FreeRTOS task parameter.
+ */
 void blink_task (void *param)
 {
 	while(1) {
