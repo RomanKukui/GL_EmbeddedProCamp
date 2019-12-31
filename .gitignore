@@ -1,3 +1,5 @@
+*.TMP
+
 # Prerequisites
 *.d
 
