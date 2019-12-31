@@ -16,8 +16,26 @@
 #include "usart.h"
 #include "string.h"
 
+/// B1 pressed level.
+#define PRESSED_B1_VAL		1
+
+/// Button presses before task creating. Range: 1 ~ 128.
+#define TAP_TO_DEL		2
+
+/// Button presses before task deleting. Range: 1 ~ 127.
+#define TAP_TO_CREATE		3
+
+#define CHANGE_PRIO_INCS	5
+
 /// Hold Blinking task handler.
-TaskHandle_t blink_task_handler;
+TaskHandle_t blink_task_h;
+
+TaskHandle_t dummy_ld8_on_h;
+
+TaskHandle_t dummy_ld8_off_h;
+
+/// Hold value, that inc every blink
+uint8_t blink_cnt;
 
 /* Private function prototypes -----------------------------------------------*/
 void MX_FREERTOS_Init(void); /* (MISRA C 2004 rule 8.1) */
@@ -51,6 +69,10 @@ __weak void vApplicationIdleHook( void )
 	HAL_GPIO_WritePin(LD7_GPIO_Port, LD7_Pin, GPIO_PIN_SET);
 	HAL_Delay(500);
 	HAL_GPIO_WritePin(LD7_GPIO_Port, LD7_Pin, GPIO_PIN_RESET);
+	
+	HAL_GPIO_WritePin(LD5_GPIO_Port, LD5_Pin, GPIO_PIN_SET);
+	HAL_Delay(500);
+	HAL_GPIO_WritePin(LD5_GPIO_Port, LD5_Pin, GPIO_PIN_RESET);
 }
 
 static StaticTask_t xIdleTaskTCBBuffer;
@@ -77,6 +99,8 @@ void blink_task(void *param)
 		HAL_GPIO_TogglePin(LD10_GPIO_Port, LD10_Pin);
 		vTaskDelay(250);
 //		vTaskDelayUntil(&last_wake_time, 250);
+		
+		blink_cnt++;		
 	}
 }
 
@@ -91,12 +115,14 @@ void start_blinking(void)
 		configMINIMAL_STACK_SIZE, 
 		NULL, 
 		2, 
-		&blink_task_handler
+		&blink_task_h
 	);
 	
 	if (create_res != pdPASS) {
 		/// \todo Error handling
 	}
+	
+	blink_cnt = 0;
 }
 
 /** \brief	Delete blinking task and turn off LD10.
@@ -105,18 +131,12 @@ void start_blinking(void)
  */
 void stop_blinking(void)
 {
-	if (blink_task_handler != NULL) {
-		vTaskDelete(blink_task_handler);
-		blink_task_handler = NULL;
+	if (blink_task_h != NULL) {
+		vTaskDelete(blink_task_h);
+		blink_task_h = NULL;
 		HAL_GPIO_WritePin(LD10_GPIO_Port, LD10_Pin, GPIO_PIN_RESET);
 	}
 }
-
-/// Button presses before task creating. Range: 1 ~ 128.
-#define TAP_TO_DEL	3
-
-/// Button presses before task deleting. Range: 1 ~ 127.
-#define TAP_TO_CREATE	5	///< Button presses for task 
 
 /** \brief	Button press event handler.
  */
@@ -126,17 +146,19 @@ void btn_pressed(void)
 	
 	static int8_t tsk_create_cnt;
 	
-	if (blink_task_handler != NULL) {
+	if (blink_task_h != NULL) {
 		tsk_create_cnt--;
 		
 		if (tsk_create_cnt == -TAP_TO_DEL) {
 			stop_blinking();
+			tsk_create_cnt = 0;
 		}
 	} else {
 		tsk_create_cnt++;
 		
 		if (tsk_create_cnt == TAP_TO_CREATE) {
-			start_blinking();	// after 5 presses, start blinking again
+			start_blinking();
+			tsk_create_cnt = 0;
 		}
 	}
 	HAL_GPIO_WritePin(LD6_GPIO_Port, LD6_Pin, GPIO_PIN_SET);
@@ -149,9 +171,6 @@ void btn_released(void)
 //	vTaskResume(blink_task_handler);
 	HAL_GPIO_WritePin(LD6_GPIO_Port, LD6_Pin, GPIO_PIN_RESET);
 }
-
-/// B1 pressed level.
-#define PRESSED_B1_VAL	1
 
 /** \brief	B1 key-press seeking task.
  *
@@ -176,8 +195,37 @@ void button_task(void *param)
 			
 			btn_released();
 		}
-		// *time for Idle execution
 		vTaskDelay(200);		// period between button status reading
+		// *time for Idle execution
+	}
+}
+
+void dummy_task_ld8_on(void *param)
+{
+	while (1) {
+		HAL_GPIO_WritePin(LD8_GPIO_Port, LD8_Pin, GPIO_PIN_SET);
+		
+		if (blink_cnt == CHANGE_PRIO_INCS) {
+			blink_cnt = 0;
+			
+			vTaskPrioritySet(NULL, 0);
+			vTaskPrioritySet(dummy_ld8_off_h, 1);		
+		}
+	}
+}
+
+
+void dummy_task_ld8_off(void *param)
+{
+	while (1) {
+		HAL_GPIO_WritePin(LD8_GPIO_Port, LD8_Pin, GPIO_PIN_RESET);
+		
+		if (blink_cnt == CHANGE_PRIO_INCS) {
+			blink_cnt = 0;
+			
+			vTaskPrioritySet(NULL, 0);
+			vTaskPrioritySet(dummy_ld8_on_h, 1);
+		}
 	}
 }
 
@@ -202,9 +250,30 @@ void MX_FREERTOS_Init(void) {
 			NULL,
 			configMINIMAL_STACK_SIZE,
 			NULL,
-			1,
+			3,
 			NULL
 	);
+	/// \todo task creation error processing skipped
+	
+	xTaskCreate(
+			dummy_task_ld8_on,
+			NULL,
+			configMINIMAL_STACK_SIZE,
+			NULL,
+			0,
+			&dummy_ld8_on_h
+	);
+	/// \todo task creation error processing skipped
+	
+	xTaskCreate(	
+			dummy_task_ld8_off,
+			NULL,
+			configMINIMAL_STACK_SIZE,
+			NULL,
+			0,
+			&dummy_ld8_off_h
+	);
+	/// \todo task creation error processing skipped
 }
 
 /************************ (C) COPYRIGHT STMicroelectronics *****END OF FILE****/
