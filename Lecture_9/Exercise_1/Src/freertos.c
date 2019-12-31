@@ -14,6 +14,7 @@
 
 #include "gpio.h"
 #include "usart.h"
+#include "string.h"
 
 /// Hold Blinking task handler.
 TaskHandle_t blink_task_handler;
@@ -39,14 +40,17 @@ __weak void vApplicationIdleHook( void )
    function, because it is the responsibility of the idle task to clean up
    memory allocated by the kernel to any task that has since been deleted. */
 	
-	HAL_GPIO_WritePin(LD7_GPIO_Port, LD7_Pin, GPIO_PIN_SET);
+	HAL_GPIO_WritePin(LD3_GPIO_Port, LD3_Pin, GPIO_PIN_SET);
+	HAL_Delay(500);
+	HAL_GPIO_WritePin(LD3_GPIO_Port, LD3_Pin, GPIO_PIN_RESET);
 	
-	// heavy code simulation
-//	for (uint64_t i = UINT64_MAX; i > 0; i--) {
-//		for (uint64_t j = UINT64_MAX; j > 0; j--) {
-//			__nop;
-//		}
-//	}
+	HAL_GPIO_WritePin(LD5_GPIO_Port, LD5_Pin, GPIO_PIN_SET);
+	HAL_Delay(500);
+	HAL_GPIO_WritePin(LD5_GPIO_Port, LD5_Pin, GPIO_PIN_RESET);
+	
+	HAL_GPIO_WritePin(LD7_GPIO_Port, LD7_Pin, GPIO_PIN_SET);
+	HAL_Delay(500);
+	HAL_GPIO_WritePin(LD7_GPIO_Port, LD7_Pin, GPIO_PIN_RESET);
 }
 
 static StaticTask_t xIdleTaskTCBBuffer;
@@ -64,14 +68,12 @@ void vApplicationGetIdleTaskMemory( StaticTask_t **ppxIdleTaskTCBBuffer, StackTy
  *
  * \param[in,out]	*param Default FreeRTOS task parameter.
  */
-void blink_task (void *param)
+void blink_task(void *param)
 {	
 //	TickType_t last_wake_time;
 //	last_wake_time = xTaskGetTickCount();
 	
 	while(1) {
-		HAL_GPIO_WritePin(LD7_GPIO_Port, LD7_Pin, GPIO_PIN_RESET);
-		
 		HAL_GPIO_TogglePin(LD10_GPIO_Port, LD10_Pin);
 		vTaskDelay(250);
 //		vTaskDelayUntil(&last_wake_time, 250);
@@ -80,7 +82,7 @@ void blink_task (void *param)
 
 /** \brief	Create blinking task and check creation result.
  */
-void start_blinking (void)
+void start_blinking(void)
 {
 	BaseType_t create_res;
 	create_res = xTaskCreate(	
@@ -97,6 +99,19 @@ void start_blinking (void)
 	}
 }
 
+/** \brief	Delete blinking task and turn off LD10.
+ *
+ * Before deletion task handler will be checked.
+ */
+void stop_blinking(void)
+{
+	if (blink_task_handler != NULL) {
+		vTaskDelete(blink_task_handler);
+		blink_task_handler = NULL;
+		HAL_GPIO_WritePin(LD10_GPIO_Port, LD10_Pin, GPIO_PIN_RESET);
+	}
+}
+
 /// Button presses before task creating. Range: 1 ~ 128.
 #define TAP_TO_DEL	3
 
@@ -105,7 +120,8 @@ void start_blinking (void)
 
 /** \brief	Button press event handler.
  */
-void btn_pressed (void) {
+void btn_pressed(void) 
+{
 //	vTaskSuspend(blink_task_handler);
 	
 	static int8_t tsk_create_cnt;
@@ -114,8 +130,7 @@ void btn_pressed (void) {
 		tsk_create_cnt--;
 		
 		if (tsk_create_cnt == -TAP_TO_DEL) {
-			vTaskDelete(blink_task_handler);
-		blink_task_handler = NULL;
+			stop_blinking();
 		}
 	} else {
 		tsk_create_cnt++;
@@ -124,13 +139,15 @@ void btn_pressed (void) {
 			start_blinking();	// after 5 presses, start blinking again
 		}
 	}
-	HAL_GPIO_TogglePin(LD6_GPIO_Port, LD6_Pin);
+	HAL_GPIO_WritePin(LD6_GPIO_Port, LD6_Pin, GPIO_PIN_SET);
 }
 
 /** \brief	Button B1 release event handler.
  */
-void btn_released (void) {
+void btn_released(void)
+{
 //	vTaskResume(blink_task_handler);
+	HAL_GPIO_WritePin(LD6_GPIO_Port, LD6_Pin, GPIO_PIN_RESET);
 }
 
 /// B1 pressed level.
@@ -140,13 +157,11 @@ void btn_released (void) {
  *
  * \param[in,out]	*param Default FreeRTOS task parameter.
  */
-void button_task (void *param)
+void button_task(void *param)
 {		
 	uint8_t btn_pressed_f = 0;
 	
-	while(1) {
-		HAL_GPIO_WritePin(LD7_GPIO_Port, LD7_Pin, GPIO_PIN_RESET);
-		
+	while(1) {		
 		if (HAL_GPIO_ReadPin(B1_GPIO_Port, B1_Pin) == PRESSED_B1_VAL) {
 			if (btn_pressed_f == 0) {
 				vTaskDelay(60);		// debouncing delay
@@ -161,6 +176,8 @@ void button_task (void *param)
 			
 			btn_released();
 		}
+		// *time for Idle execution
+		vTaskDelay(200);		// period between button status reading
 	}
 }
 
