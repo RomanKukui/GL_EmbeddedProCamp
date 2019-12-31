@@ -1,26 +1,21 @@
-/**
-  ******************************************************************************
-  * File Name          : freertos.c
-  * Description        : Code for freertos applications
-  ******************************************************************************
-  * @attention
-  *
-  * <h2><center>&copy; Copyright (c) 2019 STMicroelectronics.
-  * All rights reserved.</center></h2>
-  *
-  * This software component is licensed by ST under Ultimate Liberty license
-  * SLA0044, the "License"; You may not use this file except in compliance with
-  * the License. You may obtain a copy of the License at:
-  *                             www.st.com/SLA0044
-  *
-  ******************************************************************************
-  */
+/** \file
+ *
+ * Tasks:
+ * 1) Create tasks and delete
+ * 2) Assign task priority change priority
+ * 3) Create idle task hook 
+ */
 
 /* Includes ------------------------------------------------------------------*/
 #include "FreeRTOS.h"
 #include "task.h"
 #include "main.h"
 #include "cmsis_os.h"
+
+#include "gpio.h"
+
+/// Hold Blinking task handler.
+TaskHandle_t blink_task_handler;
 
 /* Private function prototypes -----------------------------------------------*/
 void MX_FREERTOS_Init(void); /* (MISRA C 2004 rule 8.1) */
@@ -31,7 +26,6 @@ void vApplicationGetIdleTaskMemory( StaticTask_t **ppxIdleTaskTCBBuffer, StackTy
 /* Hook prototypes */
 void vApplicationIdleHook(void);
 
-/* USER CODE BEGIN 2 */
 __weak void vApplicationIdleHook( void )
 {
    /* vApplicationIdleHook() will only be called if configUSE_IDLE_HOOK is set
@@ -43,6 +37,8 @@ __weak void vApplicationIdleHook( void )
    important that vApplicationIdleHook() is permitted to return to its calling
    function, because it is the responsibility of the idle task to clean up
    memory allocated by the kernel to any task that has since been deleted. */
+	
+	HAL_GPIO_TogglePin(LD7_GPIO_Port, LD7_Pin);
 }
 
 static StaticTask_t xIdleTaskTCBBuffer;
@@ -54,7 +50,91 @@ void vApplicationGetIdleTaskMemory( StaticTask_t **ppxIdleTaskTCBBuffer, StackTy
   *ppxIdleTaskStackBuffer = &xIdleStack[0];
   *pulIdleTaskStackSize = configMINIMAL_STACK_SIZE;
 
-}                   
+}
+
+/// LD10 blinking task.
+void blink_task (void *param)
+{
+	while(1) {
+		HAL_GPIO_TogglePin(LD10_GPIO_Port, LD10_Pin);
+		vTaskDelay(250);
+	}
+}
+
+/** \brief	Create blinking task and check creation result.
+ */
+void start_blinking (void)
+{
+	BaseType_t create_res;
+	create_res = xTaskCreate(	
+		blink_task, 
+		NULL, 
+		configMINIMAL_STACK_SIZE, 
+		NULL, 
+		2, 
+		&blink_task_handler
+	);
+	
+	if (create_res != pdPASS) {
+		/// \todo Error handling
+	}
+}
+
+/** \brief	Button press event handler.
+ */
+void btn_pressed (void) {
+//	vTaskSuspend(blink_task_handler);
+	
+	static uint8_t tsk_create_cnt;
+	
+	if (blink_task_handler != NULL) {
+		vTaskDelete(blink_task_handler);
+		blink_task_handler = NULL;
+		
+		tsk_create_cnt = 0;
+	} else {
+		tsk_create_cnt++;
+		if (tsk_create_cnt == 5) {
+			start_blinking();	// after 5 presses, start blinking again
+		}
+	}
+	HAL_GPIO_TogglePin(LD6_GPIO_Port, LD6_Pin);
+}
+
+/** \brief	Button B1 release event handler.
+ */
+void btn_released (void) {
+//	vTaskResume(blink_task_handler);
+}
+
+/// Define B1 pressed level
+#define PRESSED_B1_VAL	1
+
+/** \brief	B1 key-press seeking task.
+ *
+ * \param[in,out]	*param Default FreeRTOS task parameter.
+ */
+void button_task (void *param)
+{	
+	uint8_t btn_pressed_f = 0;
+	
+	while(1) {
+		if (HAL_GPIO_ReadPin(B1_GPIO_Port, B1_Pin) == PRESSED_B1_VAL) {
+			if (btn_pressed_f == 0) {
+				vTaskDelay(60);		// debouncing delay
+				
+				if (HAL_GPIO_ReadPin(B1_GPIO_Port, B1_Pin) == PRESSED_B1_VAL) {
+					btn_pressed_f = 1;
+					btn_pressed();
+				}
+			}
+		} else {
+			btn_pressed_f = 0;	// button released
+			
+			btn_released();
+		}
+	}
+}
 
 /**
   * @brief  FreeRTOS initialization
@@ -71,7 +151,15 @@ void MX_FREERTOS_Init(void) {
   /* add queues, ... */
 
   /* Create the thread(s) */
-
+	start_blinking();
+	
+	xTaskCreate(	button_task,
+			NULL,
+			configMINIMAL_STACK_SIZE,
+			NULL,
+			1,
+			NULL
+	);
 }
 
 /************************ (C) COPYRIGHT STMicroelectronics *****END OF FILE****/
