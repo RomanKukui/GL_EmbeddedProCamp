@@ -13,6 +13,7 @@
 #include "cmsis_os.h"
 
 #include "gpio.h"
+#include "usart.h"
 
 /// Hold Blinking task handler.
 TaskHandle_t blink_task_handler;
@@ -38,7 +39,14 @@ __weak void vApplicationIdleHook( void )
    function, because it is the responsibility of the idle task to clean up
    memory allocated by the kernel to any task that has since been deleted. */
 	
-	HAL_GPIO_TogglePin(LD7_GPIO_Port, LD7_Pin);
+	HAL_GPIO_WritePin(LD7_GPIO_Port, LD7_Pin, GPIO_PIN_SET);
+	
+	// heavy code simulation
+//	for (uint64_t i = UINT64_MAX; i > 0; i--) {
+//		for (uint64_t j = UINT64_MAX; j > 0; j--) {
+//			__nop;
+//		}
+//	}
 }
 
 static StaticTask_t xIdleTaskTCBBuffer;
@@ -57,10 +65,16 @@ void vApplicationGetIdleTaskMemory( StaticTask_t **ppxIdleTaskTCBBuffer, StackTy
  * \param[in,out]	*param Default FreeRTOS task parameter.
  */
 void blink_task (void *param)
-{
+{	
+//	TickType_t last_wake_time;
+//	last_wake_time = xTaskGetTickCount();
+	
 	while(1) {
+		HAL_GPIO_WritePin(LD7_GPIO_Port, LD7_Pin, GPIO_PIN_RESET);
+		
 		HAL_GPIO_TogglePin(LD10_GPIO_Port, LD10_Pin);
 		vTaskDelay(250);
+//		vTaskDelayUntil(&last_wake_time, 250);
 	}
 }
 
@@ -83,21 +97,30 @@ void start_blinking (void)
 	}
 }
 
+/// Button presses before task creating. Range: 1 ~ 128.
+#define TAP_TO_DEL	3
+
+/// Button presses before task deleting. Range: 1 ~ 127.
+#define TAP_TO_CREATE	5	///< Button presses for task 
+
 /** \brief	Button press event handler.
  */
 void btn_pressed (void) {
 //	vTaskSuspend(blink_task_handler);
 	
-	static uint8_t tsk_create_cnt;
+	static int8_t tsk_create_cnt;
 	
 	if (blink_task_handler != NULL) {
-		vTaskDelete(blink_task_handler);
-		blink_task_handler = NULL;
+		tsk_create_cnt--;
 		
-		tsk_create_cnt = 0;
+		if (tsk_create_cnt == -TAP_TO_DEL) {
+			vTaskDelete(blink_task_handler);
+		blink_task_handler = NULL;
+		}
 	} else {
 		tsk_create_cnt++;
-		if (tsk_create_cnt == 5) {
+		
+		if (tsk_create_cnt == TAP_TO_CREATE) {
 			start_blinking();	// after 5 presses, start blinking again
 		}
 	}
@@ -110,7 +133,7 @@ void btn_released (void) {
 //	vTaskResume(blink_task_handler);
 }
 
-/// Define B1 pressed level
+/// B1 pressed level.
 #define PRESSED_B1_VAL	1
 
 /** \brief	B1 key-press seeking task.
@@ -118,10 +141,12 @@ void btn_released (void) {
  * \param[in,out]	*param Default FreeRTOS task parameter.
  */
 void button_task (void *param)
-{	
+{		
 	uint8_t btn_pressed_f = 0;
 	
 	while(1) {
+		HAL_GPIO_WritePin(LD7_GPIO_Port, LD7_Pin, GPIO_PIN_RESET);
+		
 		if (HAL_GPIO_ReadPin(B1_GPIO_Port, B1_Pin) == PRESSED_B1_VAL) {
 			if (btn_pressed_f == 0) {
 				vTaskDelay(60);		// debouncing delay
