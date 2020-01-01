@@ -13,28 +13,29 @@
 #include "cmsis_os.h"
 
 #include "gpio.h"
-#include "usart.h"
-#include "string.h"
 
-/// B1 pressed level.
+/// B1 button pressed input value.
 #define PRESSED_B1_VAL		1
 
-/// Button presses before task creating. Range: 1 ~ 128.
+/// Number of button presses before task creating. Range: 1 ~ 128.
 #define TAP_TO_DEL		2
 
-/// Button presses before task deleting. Range: 1 ~ 127.
+/// Number of button presses before task deleting. Range: 1 ~ 127.
 #define TAP_TO_CREATE		3
 
-#define CHANGE_PRIO_INCS	5
+/// Number of blinks for dummy tasks prio changes
+#define BLINK_TO_CHANGE_PRIO	5
 
-/// Hold Blinking task handler.
+/// Blinking task handler.
 TaskHandle_t blink_task_h;
 
+/// Dummy LD8-on task handler.
 TaskHandle_t dummy_ld8_on_h;
 
+/// Dummy LD8-off task handler.
 TaskHandle_t dummy_ld8_off_h;
 
-/// Hold value, that inc every blink
+/// Blinks counter (increments every blink by blink task).
 uint8_t blink_cnt;
 
 /* Private function prototypes -----------------------------------------------*/
@@ -108,6 +109,8 @@ void blink_task(void *param)
  */
 void start_blinking(void)
 {
+	blink_cnt = 0;
+	
 	BaseType_t create_res;
 	create_res = xTaskCreate(	
 		blink_task, 
@@ -121,8 +124,6 @@ void start_blinking(void)
 	if (create_res != pdPASS) {
 		/// \todo Error handling
 	}
-	
-	blink_cnt = 0;
 }
 
 /** \brief	Delete blinking task and turn off LD10.
@@ -134,6 +135,7 @@ void stop_blinking(void)
 	if (blink_task_h != NULL) {
 		vTaskDelete(blink_task_h);
 		blink_task_h = NULL;
+		
 		HAL_GPIO_WritePin(LD10_GPIO_Port, LD10_Pin, GPIO_PIN_RESET);
 	}
 }
@@ -150,14 +152,14 @@ void btn_pressed(void)
 		tsk_create_cnt--;
 		
 		if (tsk_create_cnt == -TAP_TO_DEL) {
-			stop_blinking();
+			stop_blinking();		// delete blink task
 			tsk_create_cnt = 0;
 		}
 	} else {
 		tsk_create_cnt++;
 		
 		if (tsk_create_cnt == TAP_TO_CREATE) {
-			start_blinking();
+			start_blinking();		// create blink task
 			tsk_create_cnt = 0;
 		}
 	}
@@ -191,21 +193,26 @@ void button_task(void *param)
 				}
 			}
 		} else {
-			btn_pressed_f = 0;	// button released
-			
-			btn_released();
+			if (btn_pressed_f == 1) {
+				btn_released();
+				
+				btn_pressed_f = 0;
+			}
 		}
-		vTaskDelay(200);		// period between button status reading
-		// *time for Idle execution
+		vTaskDelay(200);	// period between button status reading
 	}
 }
 
+/** \brief	Dummy task, that ON LD8 in infinite loop.
+ *
+ * \param[in,out]	*param Default FreeRTOS task parameter.
+ */
 void dummy_task_ld8_on(void *param)
 {
 	while (1) {
 		HAL_GPIO_WritePin(LD8_GPIO_Port, LD8_Pin, GPIO_PIN_SET);
 		
-		if (blink_cnt == CHANGE_PRIO_INCS) {
+		if (blink_cnt == BLINK_TO_CHANGE_PRIO) {
 			blink_cnt = 0;
 			
 			vTaskPrioritySet(NULL, 0);
@@ -214,13 +221,16 @@ void dummy_task_ld8_on(void *param)
 	}
 }
 
-
+/** \brief	Dummy task, that OFF LD8 in infinite loop.
+ *
+ * \param[in,out]	*param Default FreeRTOS task parameter.
+ */
 void dummy_task_ld8_off(void *param)
 {
 	while (1) {
 		HAL_GPIO_WritePin(LD8_GPIO_Port, LD8_Pin, GPIO_PIN_RESET);
 		
-		if (blink_cnt == CHANGE_PRIO_INCS) {
+		if (blink_cnt == BLINK_TO_CHANGE_PRIO) {
 			blink_cnt = 0;
 			
 			vTaskPrioritySet(NULL, 0);
