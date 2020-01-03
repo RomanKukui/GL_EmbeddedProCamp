@@ -336,7 +336,7 @@
               <MiscControls></MiscControls>
               <Define>USE_HAL_DRIVER,STM32F303xC</Define>
               <Undefine></Undefine>
-              <IncludePath>../Inc;../Drivers/STM32F3xx_HAL_Driver/Inc/Legacy;../Drivers/STM32F3xx_HAL_Driver/Inc;../Middlewares/Third_Party/FreeRTOS/Source/include;../Middlewares/Third_Party/FreeRTOS/Source/CMSIS_RTOS;../Middlewares/Third_Party/FreeRTOS/Source/portable/RVDS/ARM_CM4F;../Drivers/CMSIS/Device/ST/STM32F3xx/Include;../Drivers/CMSIS/Include</IncludePath>
+              <IncludePath>../Inc;../Drivers/STM32F3xx_HAL_Driver/Inc/Legacy;../Drivers/STM32F3xx_HAL_Driver/Inc;../Middlewares/Third_Party/FreeRTOS/Source/include;../Middlewares/Third_Party/FreeRTOS/Source/CMSIS_RTOS;../Middlewares/Third_Party/FreeRTOS/Source/portable/RVDS/ARM_CM4F;../Drivers/CMSIS/Device/ST/STM32F3xx/Include;../Drivers/CMSIS/Include;..\Drivers\TraceRecorder\streamports\Jlink_RTT\include;..\Drivers\TraceRecorder\include;..\Drivers\TraceRecorder\config</IncludePath>
             </VariousControls>
           </Cads>
           <Aads>
@@ -584,6 +584,41 @@
               <FileName>port.c</FileName>
               <FileType>1</FileType>
               <FilePath>../Middlewares/Third_Party/FreeRTOS/Source/portable/RVDS/ARM_CM4F/port.c</FilePath>
+            </File>
+          </Files>
+        </Group>
+        <Group>
+          <GroupName>Drivers/J-Link RTT</GroupName>
+          <Files>
+            <File>
+              <FileName>SEGGER_RTT.c</FileName>
+              <FileType>1</FileType>
+              <FilePath>..\Drivers\TraceRecorder\streamports\Jlink_RTT\SEGGER_RTT.c</FilePath>
+            </File>
+            <File>
+              <FileName>trcStreamingPort.c</FileName>
+              <FileType>1</FileType>
+              <FilePath>..\Drivers\TraceRecorder\streamports\Jlink_RTT\trcStreamingPort.c</FilePath>
+            </File>
+          </Files>
+        </Group>
+        <Group>
+          <GroupName>Drivers/TraceRecorder</GroupName>
+          <Files>
+            <File>
+              <FileName>trcKernelPort.c</FileName>
+              <FileType>1</FileType>
+              <FilePath>..\Drivers\TraceRecorder\trcKernelPort.c</FilePath>
+            </File>
+            <File>
+              <FileName>trcSnapshotRecorder.c</FileName>
+              <FileType>1</FileType>
+              <FilePath>..\Drivers\TraceRecorder\trcSnapshotRecorder.c</FilePath>
+            </File>
+            <File>
+              <FileName>trcStreamingRecorder.c</FileName>
+              <FileType>1</FileType>
+              <FilePath>..\Drivers\TraceRecorder\trcStreamingRecorder.c</FilePath>
             </File>
           </Files>
         </Group>

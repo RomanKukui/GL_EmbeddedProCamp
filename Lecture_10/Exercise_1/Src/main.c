@@ -12,6 +12,7 @@
 #include "gpio.h"
 
 #include "string.h"
+#include "trcRecorder.h"
 
 void SystemClock_Config(void);
 void MX_FREERTOS_Init(void);
@@ -31,6 +32,9 @@ int main(void)
   /* Initialize all configured peripherals */
   MX_GPIO_Init();
   MX_USART1_UART_Init();
+	
+	// enable Tracealyzer streaming
+	vTraceEnable(TRC_START);
 	
 	// Welcome msg
 	uint8_t hello_msg[] = "\n\r\n\rInitialization completed\n\r";

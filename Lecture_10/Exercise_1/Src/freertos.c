@@ -151,7 +151,7 @@ void start_blinking(void)
 	BaseType_t create_res;
 	create_res = xTaskCreate(	
 		blink_task, 
-		NULL, 
+		"blink", 
 		configMINIMAL_STACK_SIZE, 
 		NULL, 
 		2,
@@ -238,7 +238,7 @@ void button_task(void *param)
 				btn_pressed_f = 0;
 			}
 		}
-		vTaskDelay(200);	// period between button status reading
+		vTaskDelay(100);	// period between button status reading
 	}
 }
 
@@ -257,6 +257,7 @@ void dummy_task_ld8_on(void *param)
 			vTaskPrioritySet(NULL, 0);
 			vTaskPrioritySet(dummy_ld8_off_h, 1);		
 		}
+//		vTaskDelay(100);
 	}
 }
 
@@ -275,6 +276,7 @@ void dummy_task_ld8_off(void *param)
 			vTaskPrioritySet(NULL, 0);
 			vTaskPrioritySet(dummy_ld8_on_h, 1);
 		}
+//		vTaskDelay(100);
 	}
 }
 
@@ -308,7 +310,7 @@ void MX_FREERTOS_Init(void) {
 	
 	button_task_h = xTaskCreateStatic(
 			button_task,
-			NULL,
+			"button",
 			configMINIMAL_STACK_SIZE,
 			NULL,
 			3,
@@ -320,7 +322,7 @@ void MX_FREERTOS_Init(void) {
 
 	xTaskCreate(
 			dummy_task_ld8_on,
-			NULL,
+			"dummy ON",
 			configMINIMAL_STACK_SIZE,
 			NULL,
 			0,
@@ -331,7 +333,7 @@ void MX_FREERTOS_Init(void) {
 	
 	xTaskCreate(	
 			dummy_task_ld8_off,
-			NULL,
+			"dummy OFF",
 			configMINIMAL_STACK_SIZE,
 			NULL,
 			0,
