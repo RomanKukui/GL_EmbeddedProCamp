@@ -1,9 +1,9 @@
 /** \file
  *
  * Tasks:
- * 1) Create tasks and delete
- * 2) Assign task priority change priority
- * 3) Create idle task hook 
+ * 1) Create project to demonstrate static memory allocation.
+ * 2) Create project to demonstrate dynamic memory allocation.
+ * 3) Try Tracealyzer debugger.
  */
 
 /* Includes ------------------------------------------------------------------*/
