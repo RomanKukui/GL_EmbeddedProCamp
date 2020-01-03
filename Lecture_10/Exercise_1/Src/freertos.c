@@ -33,14 +33,18 @@
 /// Blink task handler.
 TaskHandle_t blink_task_h;
 
-/// Blinking task control structure.
-StaticTask_t blink_tcs;
-
-/// Blink task stack array.
-StackType_t blink_stack[configMINIMAL_STACK_SIZE];
-
 /// Blinks counter (increments every blink by blink task).
 uint8_t blink_cnt;
+
+
+/// Button task handler.
+TaskHandle_t button_task_h;
+
+/// Button task control structure.
+StaticTask_t button_tcs;
+
+/// Button task stack array.
+StackType_t button_stack[configMINIMAL_STACK_SIZE];
 
 
 /// Dummy LD8-on task handler.
@@ -71,21 +75,21 @@ __weak void vApplicationIdleHook( void )
    function, because it is the responsibility of the idle task to clean up
    memory allocated by the kernel to any task that has since been deleted. */
 	
+	HAL_GPIO_WritePin(LD5_GPIO_Port, LD5_Pin, GPIO_PIN_RESET);
 	HAL_GPIO_WritePin(LD3_GPIO_Port, LD3_Pin, GPIO_PIN_SET);
 	HAL_Delay(500);
-	HAL_GPIO_WritePin(LD3_GPIO_Port, LD3_Pin, GPIO_PIN_RESET);
 	
+	HAL_GPIO_WritePin(LD3_GPIO_Port, LD3_Pin, GPIO_PIN_RESET);
 	HAL_GPIO_WritePin(LD5_GPIO_Port, LD5_Pin, GPIO_PIN_SET);
 	HAL_Delay(500);
-	HAL_GPIO_WritePin(LD5_GPIO_Port, LD5_Pin, GPIO_PIN_RESET);
 	
+	HAL_GPIO_WritePin(LD5_GPIO_Port, LD5_Pin, GPIO_PIN_RESET);
 	HAL_GPIO_WritePin(LD7_GPIO_Port, LD7_Pin, GPIO_PIN_SET);
 	HAL_Delay(500);
-	HAL_GPIO_WritePin(LD7_GPIO_Port, LD7_Pin, GPIO_PIN_RESET);
 	
+	HAL_GPIO_WritePin(LD7_GPIO_Port, LD7_Pin, GPIO_PIN_RESET);
 	HAL_GPIO_WritePin(LD5_GPIO_Port, LD5_Pin, GPIO_PIN_SET);
 	HAL_Delay(500);
-	HAL_GPIO_WritePin(LD5_GPIO_Port, LD5_Pin, GPIO_PIN_RESET);
 }
 
 static StaticTask_t xIdleTaskTCBBuffer;
@@ -118,7 +122,7 @@ void print_free_heap(char *in_msg)
 	
 	strcpy((char*)msg, in_msg);
 	
-	sprintf((char*)(msg + in_msg_size), " free heap: %d bytes\n\r", free_heap);
+	sprintf((char*)(msg + in_msg_size), " free heap: \t%d bytes\n\r", free_heap);
 	msg_size = strlen((char*)msg);
 	
 	HAL_UART_Transmit(&huart1, msg, msg_size, HAL_MAX_DELAY);
@@ -144,17 +148,17 @@ void start_blinking(void)
 {
 	blink_cnt = 0;
 	
-	blink_task_h = xTaskCreateStatic(	
+	BaseType_t create_res;
+	create_res = xTaskCreate(	
 		blink_task, 
 		NULL, 
 		configMINIMAL_STACK_SIZE, 
 		NULL, 
 		2,
-		blink_stack,
-		&blink_tcs
+		&blink_task_h
 	);
 	
-	if (blink_task_h == NULL) {
+	if (create_res != pdPASS) {
 		/// \todo Error handling
 	}
 	print_free_heap("after blink task creation");
@@ -300,17 +304,19 @@ void MX_FREERTOS_Init(void) {
 	
 	print_free_heap("before tasks creation");
 	
-	xTaskCreate(	button_task,
+	start_blinking();
+	
+	button_task_h = xTaskCreateStatic(
+			button_task,
 			NULL,
 			configMINIMAL_STACK_SIZE,
 			NULL,
 			3,
-			NULL
+			button_stack,
+			&button_tcs
 	);
 	/// \todo task creation error processing skipped
 	print_free_heap("after button task creation");
-
-	start_blinking();
 
 	xTaskCreate(
 			dummy_task_ld8_on,
