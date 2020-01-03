@@ -13,6 +13,9 @@
 #include "cmsis_os.h"
 
 #include "gpio.h"
+#include "string.h"
+#include "stdio.h"
+#include "usart.h"
 
 /// B1 button pressed input value.
 #define PRESSED_B1_VAL		1
@@ -26,8 +29,19 @@
 /// Number of blinks for dummy tasks prio changes
 #define BLINK_TO_CHANGE_PRIO	5
 
-/// Blinking task handler.
+
+/// Blink task handler.
 TaskHandle_t blink_task_h;
+
+/// Blinking task control structure.
+StaticTask_t blink_tcs;
+
+/// Blink task stack array.
+StackType_t blink_stack[configMINIMAL_STACK_SIZE];
+
+/// Blinks counter (increments every blink by blink task).
+uint8_t blink_cnt;
+
 
 /// Dummy LD8-on task handler.
 TaskHandle_t dummy_ld8_on_h;
@@ -35,8 +49,6 @@ TaskHandle_t dummy_ld8_on_h;
 /// Dummy LD8-off task handler.
 TaskHandle_t dummy_ld8_off_h;
 
-/// Blinks counter (increments every blink by blink task).
-uint8_t blink_cnt;
 
 /* Private function prototypes -----------------------------------------------*/
 void MX_FREERTOS_Init(void); /* (MISRA C 2004 rule 8.1) */
@@ -84,7 +96,32 @@ void vApplicationGetIdleTaskMemory( StaticTask_t **ppxIdleTaskTCBBuffer, StackTy
   *ppxIdleTaskTCBBuffer = &xIdleTaskTCBBuffer;
   *ppxIdleTaskStackBuffer = &xIdleStack[0];
   *pulIdleTaskStackSize = configMINIMAL_STACK_SIZE;
+}
 
+/** \brief	Print to UART1 connected console terminal free heap size in bytes.
+ *
+ * \param[in]	*in_msg	Suffix string pointer. 
+ *		This string will be added before free heap info.
+ *
+ * \warning	This function use HAL UART \b polling API/transmit method.
+ */
+void print_free_heap(char *in_msg)
+{
+	uint8_t msg[50];
+	uint8_t msg_size = 0;
+	size_t free_heap = 0;
+	
+	free_heap = xPortGetFreeHeapSize();
+	
+	size_t in_msg_size;
+	in_msg_size = strlen(in_msg);
+	
+	strcpy((char*)msg, in_msg);
+	
+	sprintf((char*)(msg + in_msg_size), " free heap: %d bytes\n\r", free_heap);
+	msg_size = strlen((char*)msg);
+	
+	HAL_UART_Transmit(&huart1, msg, msg_size, HAL_MAX_DELAY);
 }
 
 /** \brief	LD10 blinking task.
@@ -93,13 +130,9 @@ void vApplicationGetIdleTaskMemory( StaticTask_t **ppxIdleTaskTCBBuffer, StackTy
  */
 void blink_task(void *param)
 {	
-//	TickType_t last_wake_time;
-//	last_wake_time = xTaskGetTickCount();
-	
 	while(1) {
 		HAL_GPIO_TogglePin(LD10_GPIO_Port, LD10_Pin);
 		vTaskDelay(250);
-//		vTaskDelayUntil(&last_wake_time, 250);
 		
 		blink_cnt++;		
 	}
@@ -111,19 +144,20 @@ void start_blinking(void)
 {
 	blink_cnt = 0;
 	
-	BaseType_t create_res;
-	create_res = xTaskCreate(	
+	blink_task_h = xTaskCreateStatic(	
 		blink_task, 
 		NULL, 
 		configMINIMAL_STACK_SIZE, 
 		NULL, 
-		2, 
-		&blink_task_h
+		2,
+		blink_stack,
+		&blink_tcs
 	);
 	
-	if (create_res != pdPASS) {
+	if (blink_task_h == NULL) {
 		/// \todo Error handling
 	}
+	print_free_heap("after blink task creation");
 }
 
 /** \brief	Delete blinking task and turn off LD10.
@@ -138,6 +172,7 @@ void stop_blinking(void)
 		
 		HAL_GPIO_WritePin(LD10_GPIO_Port, LD10_Pin, GPIO_PIN_RESET);
 	}
+	print_free_heap("after blink task deletion");
 }
 
 /** \brief	Button press event handler.
@@ -254,7 +289,16 @@ void MX_FREERTOS_Init(void) {
   /* add queues, ... */
 
   /* Create the thread(s) */
-	start_blinking();
+	
+	uint8_t msg[30];
+	size_t msg_size = 0;
+	
+	// Total heap info
+	sprintf((char*)msg, "Total heap: %d\n\r\n\r", configTOTAL_HEAP_SIZE);
+	msg_size = strlen((char*)msg);
+	HAL_UART_Transmit(&huart1, msg, msg_size, HAL_MAX_DELAY);
+	
+	print_free_heap("before tasks creation");
 	
 	xTaskCreate(	button_task,
 			NULL,
@@ -264,7 +308,10 @@ void MX_FREERTOS_Init(void) {
 			NULL
 	);
 	/// \todo task creation error processing skipped
-	
+	print_free_heap("after button task creation");
+
+	start_blinking();
+
 	xTaskCreate(
 			dummy_task_ld8_on,
 			NULL,
@@ -274,6 +321,7 @@ void MX_FREERTOS_Init(void) {
 			&dummy_ld8_on_h
 	);
 	/// \todo task creation error processing skipped
+	print_free_heap("after dummy ON task creation");
 	
 	xTaskCreate(	
 			dummy_task_ld8_off,
@@ -284,6 +332,7 @@ void MX_FREERTOS_Init(void) {
 			&dummy_ld8_off_h
 	);
 	/// \todo task creation error processing skipped
+	print_free_heap("after dummy OFF task creation");
 }
 
 /************************ (C) COPYRIGHT STMicroelectronics *****END OF FILE****/

@@ -11,6 +11,8 @@
 #include "usart.h"
 #include "gpio.h"
 
+#include "string.h"
+
 void SystemClock_Config(void);
 void MX_FREERTOS_Init(void);
 
@@ -29,6 +31,11 @@ int main(void)
   /* Initialize all configured peripherals */
   MX_GPIO_Init();
   MX_USART1_UART_Init();
+	
+	// Welcome msg
+	uint8_t hello_msg[] = "\n\r\n\rInitialization completed\n\r";
+	size_t hello_msg_size = strlen((char*)hello_msg);
+	HAL_UART_Transmit(&huart1, hello_msg, hello_msg_size, HAL_MAX_DELAY);
 
   /* Call init function for freertos objects (in freertos.c) */
   MX_FREERTOS_Init(); 
