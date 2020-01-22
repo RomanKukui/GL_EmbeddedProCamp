@@ -12,17 +12,16 @@
 
 #include "gpio.h"
 #include "string.h"
-#include "stdio.h"
 #include "usart.h"
 
 /// UART1 mutex handler
 SemaphoreHandle_t uart1_mutex_h;
 
-/// Virtual resource 1 mutex handler
-SemaphoreHandle_t var1_mutex_h;
+/// Resource 1 mutex handler
+SemaphoreHandle_t LD4_mutex_h;
 
-/// Virtual resource 2 mutex handler
-SemaphoreHandle_t var2_mutex_h;
+/// Resource 2 mutex handler
+SemaphoreHandle_t LD5_mutex_h;
 
 /// Task1 handler
 TaskHandle_t task_1_h;
@@ -42,6 +41,10 @@ void MX_FREERTOS_Init(void); /* (MISRA C 2004 rule 8.1) */
  */
 void send_to_uart(char *str);
 
+/** \brief	Blink LD3 with 2s blink period.
+ */
+void blink_LD3(void);
+
 /* GetIdleTaskMemory prototype (linked to static allocation support) */
 void vApplicationGetIdleTaskMemory( StaticTask_t **ppxIdleTaskTCBBuffer, StackType_t **ppxIdleTaskStackBuffer, uint32_t *pulIdleTaskStackSize );
 
@@ -56,82 +59,108 @@ void vApplicationGetIdleTaskMemory( StaticTask_t **ppxIdleTaskTCBBuffer, StackTy
 }
 
 
-
+/** \brief	Task 1 source code.
+ * \param	*param Generic parameters, received from xTaskCreate().
+ */
 void task_1_main(void *param)
 {
-	while(1) {
-		send_to_uart("task 1\tstart iteration\n\r");
+while(1) {
+	send_to_uart("task 1\tstart iteration\n\r");
+	
+	HAL_Delay(1000);		// some polling code
+	
+	// try to get LD4 mutex, wait for 5 systick's
+	if (xSemaphoreTake(LD4_mutex_h, 5) == pdTRUE) {
 		
-		HAL_Delay(1000);		// some polling code
+		HAL_GPIO_WritePin(LD4_GPIO_Port, LD4_Pin, GPIO_PIN_SET);
+		send_to_uart("task 1\tLD 4\tmutex taken\n\r");
 		
-		// try lock resource 1, wait for 5 systick
-		if (xSemaphoreTake(var1_mutex_h, 5) == pdTRUE) {
-			send_to_uart("task 1\tsource 1\tmutex taked\n\r");
+		vTaskDelay(1000);	// other task suspending code
+		
+//		// *** artificial timing tune for livelock :)
+//		while(xSemaphoreTake(LD5_mutex_h, 0) == pdTRUE) {
+//			xSemaphoreGive(LD5_mutex_h);
+//		}
+		
+		// try to get LD5 mutex for compleating operation
+		if (xSemaphoreTake(LD5_mutex_h, 5) == pdTRUE) {
 			
-			vTaskDelay(1000);	// other task suspending code
+			// access to both resources
+			send_to_uart("task 1\tLD 5\tmutex taken\n\r");
 			
-			// try to lock source 2 for compleating operation
-			if (xSemaphoreTake(var2_mutex_h, 5) == pdTRUE) {
-				send_to_uart("task 1\tsource 2\tmutex taked\n\r");
-				send_to_uart("task 1\t!!! SUCCESS !!!\n\r");
-				
-				// release source 2 mutex
-				if (xSemaphoreGive(var2_mutex_h) == pdTRUE) {
-					send_to_uart("task 1\tsource 2\tmutex released\n\r");
-				} else {
-					send_to_uart("task 1\tsource 2\tmutex release error\n\r");
-				}
-			} else {
-				// release source 1 mutex and skip iteration
-				send_to_uart("task 1\tsource 2\tmutex take error\n\r");
-			}
+			// compleate operation
+			blink_LD3();
+			send_to_uart("task 1\t!!! SUCCESS !!!\n\r");
 			
-			// release source 1 mutex
-			if (xSemaphoreGive(var1_mutex_h) == pdTRUE) {
-				send_to_uart("task 1\tsource 1\tmutex released\n\r");
-			} else {
-				send_to_uart("task 1\tsource 1\tmutex release error\n\r");
-			}
-				
-		} else {
-			send_to_uart("task 1\tsource 1\tmutex take error\n\r");
-		}
+			// release LD5 mutex
+			xSemaphoreGive(LD5_mutex_h);
+			send_to_uart("task 1\tLD 5\tmutex released\n\r");
 
+		} else {
+			send_to_uart("task 1\tLD 5\tmutex take error\n\r");
+			// release LD4 mutex and skip iteration
+		}
+		vTaskDelay(1000);	// other task suspending code
+		
+		// release LD4 mutex
+		HAL_GPIO_WritePin(LD4_GPIO_Port, LD4_Pin, GPIO_PIN_RESET);
+		xSemaphoreGive(LD4_mutex_h);
+		send_to_uart("task 1\tLD 4\tmutex released\n\r");			
+	} else {
+		send_to_uart("task 1\tLD 4\tmutex take error\n\r");
 	}
 }
+}
 
+/** \brief	Task 2 source code.
+ * \param	*param Generic parameters, received from xTaskCreate().
+ */
 void task_2_main(void *param)
 {
-	while(1) {
-		send_to_uart("task 2\tstart iteration\n\r");
+while(1) {
+	send_to_uart("task 2\tstart iteration\n\r");
+	
+	HAL_Delay(1000);		// some polling code
+	
+	// try to take LD5 mutex
+	if (xSemaphoreTake(LD5_mutex_h, 5) == pdTRUE) {
 		
-		HAL_Delay(1000);		// some polling code
+		HAL_GPIO_WritePin(LD5_GPIO_Port, LD5_Pin, GPIO_PIN_SET);
+		send_to_uart("task 2\tLD 5\tmutex taken\n\r");
 		
-		// try to lock resource 2
-		if (xSemaphoreTake(var2_mutex_h, 5) == pdTRUE) {
-			send_to_uart("task 2\tsource 2\tmutex taked\n\r");
+		vTaskDelay(1200);	// other task suspending code
+		
+//		// *** artificial timing tune for livelock :)
+//		while(xSemaphoreTake(LD4_mutex_h, 0) == pdTRUE) {
+//			xSemaphoreGive(LD4_mutex_h);
+//		}
+		
+		// try to get LD4 mutex for compleating operation
+		if (xSemaphoreTake(LD4_mutex_h, 5) == pdTRUE) {
 			
-			vTaskDelay(1000);	// other task suspending code
+			// have both mutexe's
+			send_to_uart("task 2\tLD 4\tmutex taken\n\r");
 			
-			// try to lock source 1 for compleating operation
-			if (xSemaphoreTake(var1_mutex_h, 5) == pdTRUE) {
-				send_to_uart("task 2\tsource 1\tmutex taked\n\r");
-				send_to_uart("task 2\t!!! SUCCESS !!!\n\r");
-			} else {
-				// release source 2 mutex and skip iteration
-				send_to_uart("task 2\tsource 1\tmutex take error\n\r");
-			}
+			// compleate operation
+			blink_LD3();
+			send_to_uart("task 2\t!!! SUCCESS !!!\n\r");
 			
-			// release resource 2 mutex
-			if (xSemaphoreGive(var2_mutex_h) == pdTRUE) {
-				send_to_uart("task 2\tsource 2\tmutex released\n\r");
-			} else {
-				send_to_uart("task 2\tsource 2\tmutex release error\n\r");
-			}
+			// release LD4 mutex
+			xSemaphoreGive(LD4_mutex_h);
 		} else {
-			send_to_uart("task 2\tsource 2\tmutex take error\n\r");
+			send_to_uart("task 2\tLD 4\tmutex take error\n\r");
+			// release LD5 mutex and skip iteration
 		}
+		vTaskDelay(800);	// other task suspending code
+		
+		// release LD5 mutex
+		HAL_GPIO_WritePin(LD5_GPIO_Port, LD5_Pin, GPIO_PIN_RESET);
+		xSemaphoreGive(LD5_mutex_h);
+		send_to_uart("task 2\tLD 5\tmutex released\n\r");
+	} else {
+		send_to_uart("task 2\tLD 5\tmutex take error\n\r");
 	}
+}
 }
 
 /**
@@ -147,13 +176,13 @@ void MX_FREERTOS_Init(void) {
 		/// \todo Handle semaphore creation error
 	}
 	
-	var1_mutex_h = xSemaphoreCreateMutex();
-	if (var1_mutex_h == NULL) {
+	LD4_mutex_h = xSemaphoreCreateMutex();
+	if (LD4_mutex_h == NULL) {
 		/// \todo Handle semaphore creation error
 	}
 	
-	var2_mutex_h = xSemaphoreCreateMutex();
-	if (var2_mutex_h == NULL) {
+	LD5_mutex_h = xSemaphoreCreateMutex();
+	if (LD5_mutex_h == NULL) {
 		/// \todo Handle semaphore creation error
 	}
 
@@ -205,9 +234,16 @@ void send_to_uart(char *str)
 		
 		xSemaphoreGive(uart1_mutex_h);
 	} else {
-		// cannot access source
-//		while(1);
+		// cannot access source catch
+		while(1);
 	}
+}
+
+void blink_LD3(void)
+{
+	HAL_GPIO_WritePin(LD3_GPIO_Port, LD3_Pin, GPIO_PIN_SET);
+	vTaskDelay(1000);
+	HAL_GPIO_WritePin(LD3_GPIO_Port, LD3_Pin, GPIO_PIN_RESET);
 }
 
 /************************ (C) COPYRIGHT STMicroelectronics *****END OF FILE****/
