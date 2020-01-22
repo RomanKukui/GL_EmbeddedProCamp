@@ -1,9 +1,7 @@
 /** \file
  *
  * Tasks:
- * 1) Create project to demonstrate static memory allocation.
- * 2) Create project to demonstrate dynamic memory allocation.
- * 3) Try Tracealyzer debugger.
+ * 1) Create program with livelock
  */
 
 #include "main.h"
@@ -31,14 +29,14 @@ int main(void)
   /* Initialize all configured peripherals */
   MX_GPIO_Init();
   MX_USART1_UART_Init();
-	
-	// Welcome msg
-	uint8_t hello_msg[] = "\n\r\n\rInitialization completed\n\r";
-	size_t hello_msg_size = strlen((char*)hello_msg);
-	HAL_UART_Transmit(&huart1, hello_msg, hello_msg_size, HAL_MAX_DELAY);
 
   /* Call init function for freertos objects (in freertos.c) */
   MX_FREERTOS_Init(); 
+	
+	// Welcome msg
+	uint8_t hello_msg[] = "Initialization completed\n\r";
+	size_t hello_msg_size = strlen((char*)hello_msg);
+	HAL_UART_Transmit(&huart1, hello_msg, hello_msg_size, HAL_MAX_DELAY);
 
   /* Start scheduler */
   osKernelStart();
