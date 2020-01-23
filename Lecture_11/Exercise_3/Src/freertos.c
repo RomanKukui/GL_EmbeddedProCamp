@@ -32,6 +32,9 @@ QueueHandle_t uart1_qh;
 /// Fork #0-#3 mutexes handler
 SemaphoreHandle_t fork_mh[PH_NUM];
 
+/// Time for second fork waiting, in ms
+#define WAIT_FOR_FORK_T		5000
+
 
 /// Struct, that hold LED settings.
 struct _led_representation {
@@ -45,11 +48,8 @@ typedef struct _led_representation led_t;
 /// LED settings, for using of forks visualisation.
 led_t fork_led[PH_NUM];
 
-/// LED short blink period.
-#define SHORT_BLINK_T		200
-
 /// LED long blink period.
-#define LONG_BLINK_T		500
+#define LONG_BLINK_T		200
 
 
 /// Philosopher control struct.
@@ -57,11 +57,14 @@ struct _philosopher_control_struct {
 	/// Philosopher LED config.
 	led_t led;
 	
-	/// Fork, that will be taken first mutex handler.
-	QueueHandle_t *fork1;
+	/// Fork ID, that will be taken first mutex handler.
+	uint8_t fork1_id;
 	
-	/// Fork, that will be taken second mutex handler.
-	QueueHandle_t *fork2;
+	/// Fork ID, that will be taken second mutex handler.
+	uint8_t fork2_id;
+	
+	/// NUmber of chews.
+	uint8_t chews;
 };
 
 /// Encapsulate Philosopher control struct.
@@ -80,7 +83,7 @@ void init_leds(void);
  *
  * \param[in]	*led Pointer to LED config structure.
  */
-inline void led_on(led_t *led);
+void led_on(led_t *led);
 
 /** \brief	Switch OFF LED. Wrapper for HAL.
  *
@@ -95,6 +98,15 @@ void led_off(led_t *led);
  * \param	period Period of blinking in ms.
  */
 void led_blink(led_t *led, uint8_t blinks_num, uint32_t period);
+
+/** \brief	Try to eat of philosopher (get forks and eating).
+ *
+ * \param[in]	id ID of philosopher_t.
+ *
+ * \retval	1 if eating success.
+ * \retval	0 if eating fail.
+ */
+uint8_t try_to_eat(uint8_t id);
 
 /** \brief	Send string to UART1.
  *
@@ -120,75 +132,86 @@ void vApplicationGetIdleTaskMemory( StaticTask_t **ppxIdleTaskTCBBuffer, StackTy
 /** \brief	Philosopher #1 task.
  * \param	*param Generic parameters, received from xTaskCreate().
  */
-void ph1_main(void *param)
-{
+void ph0_main(void *param)
+{	
+	ph_cs[0].fork1_id = 0;
+	ph_cs[0].fork2_id = 3;
+	ph_cs[0].chews = 5;
+	
 	while(1) {
 		// thinking
-		vTaskDelay(2000);
-		
-		// try to take forks
+		vTaskDelay(500);
 		
 		// eating
-		led_blink(&ph_cs[0].led, 5, SHORT_BLINK_T);
-		
-		vTaskDelay(1);		// sleep to next systick
+		if (try_to_eat(0) == 0) {
+			/// \todo Eating error.
+			send_to_uart("ph0 skip eating\n\r");
+		}
 	}
 }
 
 /** \brief	Philosopher #2 task.
  * \param	*param Generic parameters, received from xTaskCreate().
  */
-void ph2_main(void *param)
+void ph1_main(void *param)
 {
+	ph_cs[1].fork1_id = 0;
+	ph_cs[1].fork2_id = 1;
+	ph_cs[1].chews = 4;
+	
 	while(1) {
 		// thinking
 		vTaskDelay(1000);
 		
-		// try to take forks
-		
 		// eating
-		led_blink(&ph_cs[1].led, 7, SHORT_BLINK_T);
-		
-		vTaskDelay(1);		// sleep to next systick
+		if (try_to_eat(1) == 0) {
+			/// \todo Eating error.
+			send_to_uart("ph1 skip eating\n\r");
+		}
 	}
 }
 
 /** \brief	Philosopher #3 task.
  * \param	*param Generic parameters, received from xTaskCreate().
  */
-void ph3_main(void *param)
+void ph2_main(void *param)
 {
+	ph_cs[2].fork1_id = 2;
+	ph_cs[2].fork2_id = 1;
+	ph_cs[2].chews = 3;
+	
 	while(1) {
 		// thinking
-		vTaskDelay(3000);
-		
-		// try to take forks
-		
+		vTaskDelay(1500);
+
 		// eating
-		led_blink(&ph_cs[2].led, 3, SHORT_BLINK_T);
-		
-		vTaskDelay(1);		// sleep to next systick
+		if (try_to_eat(2) == 0) {
+			/// \todo Eating error.
+			send_to_uart("ph2 skip eating\n\r");
+		}
 	}
 }
 
 /** \brief	Philosopher #4 task.
  * \param	*param Generic parameters, received from xTaskCreate().
  */
-void ph4_main(void *param)
+void ph3_main(void *param)
 {
+	ph_cs[3].fork1_id = 2;
+	ph_cs[3].fork2_id = 3;
+	ph_cs[3].chews = 2;
+	
 	while(1) {
 		// thinking
-		vTaskDelay(5000);
-		
-		// try to take forks
+		vTaskDelay(2000);
 		
 		// eating
-		led_blink(&ph_cs[3].led, 9, SHORT_BLINK_T);
-		
-		vTaskDelay(1);		// sleep to next systick
+		if (try_to_eat(3) == 0) {
+			/// \todo Eating error.
+			send_to_uart("ph3 skip eating\n\r");
+		}
 	}
 }
-
 
 /** \brief	Send data to uart.
  * \param	*param Generic parameters, received from xTaskCreate().
@@ -261,6 +284,19 @@ void MX_FREERTOS_Init(void) {
 	}
 	
 	task_ret = xTaskCreate(
+		ph0_main,
+		NULL,
+		configMINIMAL_STACK_SIZE,
+		NULL,
+		2,
+		NULL
+	);
+	if (task_ret != pdPASS) {
+		/// \todo Handle task creation error.
+		while(1);
+	}
+	
+	task_ret = xTaskCreate(
 		ph1_main,
 		NULL,
 		configMINIMAL_STACK_SIZE,
@@ -288,19 +324,6 @@ void MX_FREERTOS_Init(void) {
 	
 	task_ret = xTaskCreate(
 		ph3_main,
-		NULL,
-		configMINIMAL_STACK_SIZE,
-		NULL,
-		2,
-		NULL
-	);
-	if (task_ret != pdPASS) {
-		/// \todo Handle task creation error.
-		while(1);
-	}
-	
-	task_ret = xTaskCreate(
-		ph4_main,
 		NULL,
 		configMINIMAL_STACK_SIZE,
 		NULL,
@@ -385,6 +408,36 @@ void led_blink(led_t *led, uint8_t blinks_num, uint32_t period)
 		led_off(led);
 		vTaskDelay(period/4);
 	}
+}
+
+uint8_t try_to_eat(uint8_t id)
+{
+	philosopher_t *ph = &ph_cs[id];
+	
+	uint8_t ret_val = 0;
+	
+	// try to take first fork
+	if (xSemaphoreTake(fork_mh[ph->fork1_id], 0) == pdPASS) {
+		led_on(&fork_led[ph->fork1_id]);
+		
+		// try to take second fork
+		if (xSemaphoreTake(fork_mh[ph->fork2_id], WAIT_FOR_FORK_T) == pdPASS) {
+			led_on(&fork_led[ph->fork2_id]);
+			
+			// eating
+			led_blink(&ph_cs[id].led, ph->chews, LONG_BLINK_T);
+			
+			ret_val = 1;
+			
+			// release second fork
+			xSemaphoreGive(fork_mh[ph->fork2_id]);
+			led_off(&fork_led[ph->fork2_id]);
+		}
+		// release first fork
+		xSemaphoreGive(fork_mh[ph->fork1_id]);
+		led_off(&fork_led[ph->fork1_id]);
+	}
+	return ret_val;
 }
 
 /************************ (C) COPYRIGHT STMicroelectronics *****END OF FILE****/
